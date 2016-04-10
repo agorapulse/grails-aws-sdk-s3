@@ -1,0 +1,21 @@
+# Grails
+
+application-DEVELOPMENT.yml
+
+# Gradle
+
+build/
+.gradle/
+
+# Eclipse
+
+.project
+.classpath
+.settings/
+
+# IDEA
+
+*.iml
+*.ipr
+*.iws
+.idea/

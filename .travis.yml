@@ -1,0 +1,9 @@
+language: groovy
+jdk: oraclejdk8
+sudo: false
+
+script:
+  - gradle test --info
+
+after_success:
+  #- gradle bintrayUpload
