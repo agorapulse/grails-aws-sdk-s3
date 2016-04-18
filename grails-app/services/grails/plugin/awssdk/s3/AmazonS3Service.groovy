@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.model.*
 import grails.core.GrailsApplication
 import grails.plugin.awssdk.AwsClientUtil
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.web.multipart.MultipartFile
 
 class AmazonS3Service implements InitializingBean {
 
@@ -41,20 +42,42 @@ class AmazonS3Service implements InitializingBean {
         defaultBucketName = serviceConfig?.bucket ?: ''
     }
 
-    protected void init(String streamName) {
-        defaultBucketName = streamName
+    protected void init(String bucketName) {
+        defaultBucketName = bucketName
     }
 
     /**
-     * 
+     *
+     * @param bucketName
+     * @param region
+     */
+    void createBucket(String bucketName,
+                      String region = '') {
+        if (!region) {
+            region = serviceConfig.region ?: config.region ?: AwsClientUtil.DEFAULT_REGION
+        }
+        client.createBucket(bucketName, region)
+    }
+
+    /**
+     *
+     * @param bucketName
+     */
+    void deleteBucket(String bucketName) {
+        client.deleteBucket(bucketName)
+    }
+
+    /**
+     *
+     * @param bucketName
      * @param key
      * @return
      */
-    boolean deleteFile(String key) {
-        assertDefaultBucketName()
+    boolean deleteFile(String bucketName,
+                       String key) {
         boolean deleted = false
         try {
-            client.deleteObject(defaultBucketName, key)
+            client.deleteObject(bucketName, key)
             deleted = true
         } catch (AmazonS3Exception exception) {
             log.warn(exception)
@@ -65,18 +88,30 @@ class AmazonS3Service implements InitializingBean {
     }
 
     /**
-     * 
+     *
+     * @param key
+     * @return
+     */
+    boolean deleteFile(String key) {
+        assertDefaultBucketName()
+        deleteFile(defaultBucketName, key)
+    }
+
+    /**
+     *
+     * @param String
+     * @param bucketName
      * @param prefix
      * @return
      */
-    boolean deleteFiles(String prefix) {
-        assertDefaultBucketName()
-        if (prefix.tokenize('/').size() < 2) return false // Multiple delete are only allowed in sub/sub directories
+    boolean deleteFiles(String bucketName,
+                        String prefix) {
+        assert prefix.tokenize('/').size() >= 2, "Multiple delete are only allowed in sub/sub directories"
         boolean deleted = false
         try {
-            ObjectListing objectListing = client.listObjects(defaultBucketName, prefix)
+            ObjectListing objectListing = listObjects(bucketName, prefix)
             objectListing.objectSummaries?.each { S3ObjectSummary summary ->
-                client.deleteObject(defaultBucketName, summary.key)
+                client.deleteObject(bucketName, summary.key)
             }
             deleted = true
         } catch (AmazonS3Exception exception) {
@@ -92,14 +127,26 @@ class AmazonS3Service implements InitializingBean {
      * @param prefix
      * @return
      */
-    boolean exists(String prefix) {
+    boolean deleteFiles(String prefix) {
         assertDefaultBucketName()
+        deleteFile(defaultBucketName, prefix)
+    }
+
+    /**
+     *
+     * @param String
+     * @param bucketName
+     * @param prefix
+     * @return
+     */
+    boolean exists(String bucketName,
+                   String prefix) {
         boolean exists = false
         if (!prefix) {
             return false
         }
         try {
-            ObjectListing objectListing = client.listObjects(defaultBucketName, prefix)
+            ObjectListing objectListing = client.listObjects(bucketName, prefix)
             if (objectListing.objectSummaries) {
                 exists = true
             }
@@ -113,40 +160,84 @@ class AmazonS3Service implements InitializingBean {
 
     /**
      *
-     * @param key
-     * @param expirationDate
+     * @param prefix
      * @return
      */
-    public String generatePresignedUrl(String key,
-                                       Date expirationDate) {
+    boolean exists(String prefix) {
         assertDefaultBucketName()
-        client.generatePresignedUrl(defaultBucketName, key, expirationDate).toString()
+        exists(defaultBucketName, prefix)
     }
 
     /**
      *
-     * @param input
-     * @param contentType
-     * @param filePrefix
-     * @param fileExtension
-     * @param fileSuffix
-     * @param cannedAcl
      * @return
      */
-    public String storeFile(Object input,
-                            String contentType,
-                            String filePrefix,
-                            String fileExtension,
-                            String fileSuffix = '',
-                            CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead) {
+    List listBucketNames() {
+        client.listBuckets().collect { it.name }
+    }
+
+    /**
+     *
+     * @param bucketName
+     * @param prefix
+     * @return
+     */
+    ObjectListing listObjects(String bucketName,
+                              String prefix) {
+        client.listObjects(bucketName, prefix)
+    }
+
+    /**
+     *
+     * @param prefix
+     * @return
+     */
+    ObjectListing listObjects(String prefix = '') {
         assertDefaultBucketName()
-        if (fileExtension == 'jpeg') {
-            fileExtension = 'jpg'
-        }
-        String path = "${filePrefix}.${fileExtension}"
-        if (fileSuffix) {
-            path = "${filePrefix}.${fileSuffix}.${fileExtension}"
-        }
+        listObjects(defaultBucketName, prefix)
+    }
+
+    /**
+     *
+     * @param String
+     * @param bucketName
+     * @param key
+     * @param expirationDate
+     * @return
+     */
+    String generatePresignedUrl(String bucketName,
+                                String key,
+                                Date expirationDate) {
+        client.generatePresignedUrl(bucketName, key, expirationDate).toString()
+    }
+
+    /**
+     *
+     * @param key
+     * @param expirationDate
+     * @return
+     */
+    String generatePresignedUrl(String key,
+                                Date expirationDate) {
+        assertDefaultBucketName()
+        generatePresignedUrl(defaultBucketName, key, expirationDate)
+    }
+
+    /**
+     *
+     * @param bucketName
+     * @param path
+     * @param input
+     * @param cannedAcl
+     * @param contentType
+     * @return
+     */
+    String storeFile(String bucketName,
+                     String path,
+                     Object input,
+                     CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead,
+                     String contentType = '') {
+        String fileExtension = path.tokenize('.').last()
         ObjectMetadata objectMetadata = new ObjectMetadata()
         Map contentInfo
         if (HTTP_CONTENTS[contentType]) {
@@ -161,7 +252,7 @@ class AmazonS3Service implements InitializingBean {
 
         try {
             if (input instanceof File) {
-                PutObjectRequest por = new PutObjectRequest(defaultBucketName, path, input)
+                PutObjectRequest por = new PutObjectRequest(bucketName, path, input)
                 por.setCannedAcl(cannedAcl)
                 client.putObject(por)
             } else {
@@ -172,7 +263,7 @@ class AmazonS3Service implements InitializingBean {
                 if (cannedAcl == CannedAccessControlList.PublicRead) {
                     objectMetadata.setHeader('x-amz-acl', 'public-read')
                 }
-                client.putObject(defaultBucketName, path, input, objectMetadata)
+                client.putObject(bucketName, path, input, objectMetadata)
             }
         } catch (AmazonS3Exception exception) {
             log.error(exception)
@@ -184,12 +275,27 @@ class AmazonS3Service implements InitializingBean {
 
         if (s3CnameEnabled) {
             Region region = AwsClientUtil.buildRegion(config, serviceConfig)
-            return "https://${region.name == AwsClientUtil.DEFAULT_REGION ? 's3' : "s3-${region.name}"}.amazonaws.com/${defaultBucketName}/${path}"
+            return "https://${region.name == AwsClientUtil.DEFAULT_REGION ? 's3' : "s3-${region.name}"}.amazonaws.com/${bucketName}/${path}"
         } else {
-            return "${client.endpoint}/${defaultBucketName}/${path}".replace('http://', 'https://')
+            return "${client.endpoint}/${bucketName}/${path}".replace('http://', 'https://')
         }
     }
 
+    /**
+     *
+     * @param path
+     * @param input
+     * @param cannedAcl
+     * @param contentType
+     * @return
+     */
+    String storeFile(String path,
+                     Object input,
+                     CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead,
+                     String contentType = '') {
+        assertDefaultBucketName()
+        storeFile(defaultBucketName, path, input, contentType, cannedAcl)
+    }
 
     // PRIVATE
 
