@@ -129,7 +129,7 @@ class AmazonS3Service implements InitializingBean {
      */
     boolean deleteFiles(String prefix) {
         assertDefaultBucketName()
-        deleteFile(defaultBucketName, prefix)
+        deleteFiles(defaultBucketName, prefix)
     }
 
     /**
@@ -294,7 +294,7 @@ class AmazonS3Service implements InitializingBean {
                      CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead,
                      String contentType = '') {
         assertDefaultBucketName()
-        storeFile(defaultBucketName, path, input, contentType, cannedAcl)
+        storeFile(defaultBucketName, path, input, cannedAcl, contentType)
     }
 
     // PRIVATE

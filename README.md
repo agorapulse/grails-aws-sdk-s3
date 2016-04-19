@@ -1,7 +1,7 @@
 Grails AWS SDK S3 Plugin
 ========================
 
-[![Build Status](https://travis-ci.org/agorapulse/grails-aws-sdk-s3.svg?token=BpxbA1UyYnNoUwrDNXtN&branch=master)](https://travis-ci.org/agorapulse/grails-aws-sdk-s3)
+[![Build Status](https://travis-ci.org/agorapulse/grails-aws-sdk-s3.svg?branch=master)](https://travis-ci.org/agorapulse/grails-aws-sdk-s3)
 
 # Introduction
 

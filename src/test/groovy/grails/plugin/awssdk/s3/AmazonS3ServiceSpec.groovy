@@ -86,6 +86,7 @@ class AmazonS3ServiceSpec extends Specification {
         boolean deleted = service.deleteFiles('prefix')
 
         then:
+        thrown AssertionError
         !deleted
         0 * service.client
     }
@@ -200,7 +201,7 @@ class AmazonS3ServiceSpec extends Specification {
         String path = "filePrefix.txt"
 
         when:
-        String url = service.storeFile(file, 'file', 'filePrefix', 'txt')
+        String url = service.storeFile(path, file)
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -213,7 +214,7 @@ class AmazonS3ServiceSpec extends Specification {
         String path = "filePrefix.txt"
 
         when:
-        String url = service.storeFile(input, 'file', 'filePrefix', 'txt')
+        String url = service.storeFile(path, input, CannedAccessControlList.PublicRead, 'txt')
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -226,7 +227,7 @@ class AmazonS3ServiceSpec extends Specification {
         String path = "filePrefix.fileSuffix.csv"
 
         when:
-        String url = service.storeFile(input, 'pdf', 'filePrefix', 'csv', 'fileSuffix', CannedAccessControlList.Private)
+        String url = service.storeFile(path, input, CannedAccessControlList.PublicRead, 'pdf')
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -239,7 +240,7 @@ class AmazonS3ServiceSpec extends Specification {
         String path = "filePrefix.fileSuffix.jpg"
 
         when:
-        String url = service.storeFile(input, 'image', 'filePrefix', 'jpeg', 'fileSuffix')
+        String url = service.storeFile(path, input, CannedAccessControlList.PublicRead, 'jpeg')
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -252,7 +253,7 @@ class AmazonS3ServiceSpec extends Specification {
         String path = "filePrefix.fileSuffix.swf"
 
         when:
-        String url = service.storeFile(input, 'flash', 'filePrefix', 'swf', 'fileSuffix')
+        String url = service.storeFile(path, input, CannedAccessControlList.PublicRead, 'flash')
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -264,7 +265,7 @@ class AmazonS3ServiceSpec extends Specification {
         InputStream input = mockInputStream()
 
         when:
-        String url = service.storeFile(input, 'file', 'filePrefix', 'txt')
+        String url = service.storeFile('somePath', input)
 
         then:
         !url
@@ -278,7 +279,7 @@ class AmazonS3ServiceSpec extends Specification {
         InputStream input = mockInputStream()
 
         when:
-        String url = service.storeFile(input, 'file', 'filePrefix', 'txt')
+        String url = service.storeFile('somePath', input)
 
         then:
         !url
