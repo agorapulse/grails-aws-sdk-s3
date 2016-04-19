@@ -10,7 +10,6 @@ The aim is to provide lightweight utility Grails service wrappers around the off
 
 The following services are currently supported:
 
-* [AWS SDK CloudSearch Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-cloudsearch)
 * [AWS SDK DynamoDB Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-dynamodb)
 * [AWS SDK Kinesis Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-kinesis)
 * [AWS SDK S3 Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-s3)
