@@ -8,9 +8,11 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.*
 import grails.core.GrailsApplication
 import grails.plugin.awssdk.AwsClientUtil
+import groovy.util.logging.Log4j
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.web.multipart.MultipartFile
 
+@Log4j
 class AmazonS3Service implements InitializingBean {
 
     static SERVICE_NAME = ServiceAbbreviations.S3
