@@ -13,7 +13,7 @@ The following services are currently supported:
 * [AWS SDK DynamoDB Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-dynamodb)
 * [AWS SDK Kinesis Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-kinesis)
 * [AWS SDK S3 Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-s3)
-* [AWS SDK SES Grails Plugin](http://github.om/agorapulse/grails-aws-sdk-ses)
+* [AWS SDK SES Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-ses)
 * [AWS SDK SQS Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-sqs)
 
 # Introduction
