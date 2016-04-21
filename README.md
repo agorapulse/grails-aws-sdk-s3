@@ -140,7 +140,7 @@ amazonS3Service.deleteBucket(bucketName)
 ## File management
 
 ```groovy 
-// Store a file
+// Store a file (PublicRead by default, so last parameter could be omitted)
 amazonS3Service.storeFile('my-bucket', 'asset/foo/someKey.jpg', new File('/Users/ben/Desktop/photo.jpg'), CannedAccessControlList.PublicRead)
 // Or if you have defined default bucket
 amazonS3Service.storeFile('asset/foo/someKey.jpg', new File('/Users/ben/Desktop/photo.jpg'), CannedAccessControlList.PublicRead)
@@ -148,9 +148,9 @@ amazonS3Service.storeFile('asset/foo/someKey.jpg', new File('/Users/ben/Desktop/
 // Store an uploaded file
 MultipartFile multipartFile = request.getFile('file')
 if (multipartFile && !multipartFile.empty) {
-    amazonS3Service.storeFile('my-bucket', 'asset/foo/' + multipartFile.originalFilename, multipartFile.inputStream, CannedAccessControlList.PublicRead)
+    amazonS3Service.storeMultipartFile('my-bucket', 'asset/foo/' + multipartFile.originalFilename, multipartFile)
     // Or if you have defined default bucket
-    amazonS3Service.storeFile('asset/foo/' + multipartFile.originalFilename, multipartFile.inputStream, CannedAccessControlList.PublicRead)
+    amazonS3Service.storeMultipartFile('asset/foo/' + multipartFile.originalFilename, multipartFile)
 }
 
 // Store a file asynchronously with transfer manager (https://java.awsblog.com/post/Tx2Q9SGR6OKSVYX/Amazon-S3-TransferManager)

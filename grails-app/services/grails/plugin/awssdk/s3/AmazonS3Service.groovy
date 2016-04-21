@@ -5,13 +5,16 @@ import com.amazonaws.ClientConfiguration
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.ServiceAbbreviations
 import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.Headers
 import com.amazonaws.services.s3.model.*
 import com.amazonaws.services.s3.transfer.TransferManager
 import com.amazonaws.services.s3.transfer.Upload
 import grails.core.GrailsApplication
 import grails.plugin.awssdk.AwsClientUtil
 import groovy.util.logging.Log4j
+import org.apache.commons.codec.digest.DigestUtils
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.web.multipart.MultipartFile
 
 @Log4j
 class AmazonS3Service implements InitializingBean {
@@ -48,6 +51,34 @@ class AmazonS3Service implements InitializingBean {
 
     protected void init(String bucketName) {
         defaultBucketName = bucketName
+    }
+
+    /**
+     *
+     * @param type
+     * @param fileExtension
+     * @param cannedAcl
+     * @return
+     */
+    ObjectMetadata buildMetadataFromType(String type,
+                                         String fileExtension) {
+        Map contentInfo
+        if (HTTP_CONTENTS[type]) {
+            contentInfo = HTTP_CONTENTS[type] as Map
+        } else if (type in ['image', 'photo']) {
+            contentInfo = [contentType: "image/${fileExtension == 'jpg' ? 'jpeg' : fileExtension}"] // Return image/jpeg for images to fix Safari issue (download image instead of inline display)
+        } else if (fileExtension == 'swf') {
+            contentInfo = [contentType: "application/x-shockwave-flash"]
+        } else {
+            contentInfo = [contentType: 'application/octet-stream', contentDisposition: 'attachment']
+        }
+
+        ObjectMetadata metadata = new ObjectMetadata()
+        metadata.setContentType(contentInfo.contentType)
+        if (contentInfo.contentDisposition) {
+            metadata.setContentDisposition(contentInfo.contentDisposition)
+        }
+        metadata
     }
 
     /**
@@ -232,33 +263,15 @@ class AmazonS3Service implements InitializingBean {
      * @param bucketName
      * @param path
      * @param input
-     * @param cannedAcl
-     * @param contentType
+     * @param metadata
      * @return
      */
-    String storeFile(String bucketName,
-                     String path,
-                     Object input,
-                     CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead,
-                     String contentType = '') {
+    String storeInputStream(String bucketName,
+                            String path,
+                            InputStream input,
+                            ObjectMetadata metadata) {
         try {
-            if (input instanceof File) {
-                PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, path, input)
-                        .withCannedAcl(cannedAcl)
-                client.putObject(putObjectRequest)
-            } else {
-                String fileExtension = path.tokenize('.').last()
-                Map contentInfo = buildContentInfo(contentType, fileExtension)
-                ObjectMetadata objectMetadata = new ObjectMetadata()
-                if (contentInfo.contentDisposition) {
-                    objectMetadata.setContentDisposition(contentInfo.contentDisposition)
-                }
-                objectMetadata.setContentType(contentInfo.contentType)
-                if (cannedAcl == CannedAccessControlList.PublicRead) {
-                    objectMetadata.setHeader('x-amz-acl', 'public-read')
-                }
-                client.putObject(bucketName, path, input, objectMetadata)
-            }
+            client.putObject(bucketName, path, input, metadata)
         } catch (AmazonS3Exception exception) {
             log.error(exception)
             return ''
@@ -267,28 +280,102 @@ class AmazonS3Service implements InitializingBean {
             return ''
         }
 
-        if (s3CnameEnabled) {
-            Region region = AwsClientUtil.buildRegion(config, serviceConfig)
-            return "https://${region.name == AwsClientUtil.DEFAULT_REGION ? 's3' : "s3-${region.name}"}.amazonaws.com/${bucketName}/${path}"
-        } else {
-            return "${client.endpoint}/${bucketName}/${path}".replace('http://', 'https://')
-        }
+        buildAbsoluteUrl(bucketName, path)
     }
 
     /**
      *
      * @param path
      * @param input
+     * @param metadata
+     * @return
+     */
+    String storeInputStream(String path,
+                            InputStream input,
+                            ObjectMetadata metadata) {
+        assertDefaultBucketName()
+        storeInputStream(defaultBucketName, path, input, metadata)
+    }
+
+    /**
+     *
+     * @param bucketName
+     * @param path
+     * @param file
      * @param cannedAcl
-     * @param contentType
+     * @return
+     */
+    String storeFile(String bucketName,
+                     String path,
+                     File file,
+                     CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead) {
+        try {
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, path, file)
+                    .withCannedAcl(cannedAcl)
+            client.putObject(putObjectRequest)
+        } catch (AmazonS3Exception exception) {
+            log.error(exception)
+            return ''
+        } catch (AmazonClientException exception) {
+            log.error(exception)
+            return ''
+        }
+
+        buildAbsoluteUrl(bucketName, path)
+    }
+
+    /**
+     *
+     * @param path
+     * @param file
+     * @param cannedAcl
      * @return
      */
     String storeFile(String path,
-                     Object input,
-                     CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead,
-                     String contentType = '') {
+                     File file,
+                     CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead) {
         assertDefaultBucketName()
-        storeFile(defaultBucketName, path, input, cannedAcl, contentType)
+        storeFile(defaultBucketName, path, file, cannedAcl)
+    }
+
+    /**
+     *
+     * @param bucketName
+     * @param path
+     * @param multipartFile
+     * @param metadata
+     * @return
+     */
+    String storeMultipartFile(String bucketName,
+                              String path,
+                              MultipartFile multipartFile,
+                              CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead,
+                              ObjectMetadata metadata = null) {
+        if (!metadata) {
+            metadata = new ObjectMetadata()
+        }
+        metadata.setHeader(Headers.S3_CANNED_ACL, cannedAcl.toString())
+        metadata.setContentLength(multipartFile.size)
+        byte[] resultByte = DigestUtils.md5(multipartFile.inputStream)
+        metadata.setContentMD5(resultByte.encodeBase64().toString())
+        metadata.setContentType(multipartFile.contentType)
+        storeInputStream(bucketName, path, multipartFile.inputStream, metadata)
+    }
+
+    /**
+     *
+     * @param path
+     * @param multipartFile
+     * @param cannedAcl
+     * @param metadata
+     * @return
+     */
+    String storeMultipartFile(String path,
+                              MultipartFile multipartFile,
+                              CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead,
+                              ObjectMetadata metadata = null) {
+        assertDefaultBucketName()
+        storeMultipartFile(defaultBucketName, path, multipartFile, cannedAcl, metadata)
     }
 
     /**
@@ -341,30 +428,11 @@ class AmazonS3Service implements InitializingBean {
         config[SERVICE_NAME]
     }
 
-    /**
-     *
-     * @param contentType
-     * @param fileExtension
-     * @return
-     */
-    private static Map buildContentInfo(String contentType,
-                                        String fileExtension) {
-        Map contentInfo
-        if (HTTP_CONTENTS[contentType]) {
-            contentInfo = HTTP_CONTENTS[contentType] as Map
-        } else if (contentType in ['image', 'photo']) {
-            contentInfo = [contentType: "image/${fileExtension == 'jpg' ? 'jpeg' : fileExtension}"] // Return image/jpeg for images to fix Safari issue (download image instead of inline display)
-        } else if (fileExtension == 'swf') {
-            contentInfo = [contentType: "application/x-shockwave-flash"]
-        } else {
-            contentInfo = [contentType: 'application/octet-stream', contentDisposition: 'attachment']
-        }
-        contentInfo
-    }
+    private String buildAbsoluteUrl(String bucketName,
+                                    String path) {
+        Region region = AwsClientUtil.buildRegion(config, serviceConfig)
+        "https://${region.name == AwsClientUtil.DEFAULT_REGION ? 's3' : "s3-${region.name}"}.amazonaws.com/${bucketName}/${path}"
 
-    private Boolean getS3CnameEnabled() {
-        def s3CnameEnabled = serviceConfig?.cnameEnabled ?: false
-        s3CnameEnabled?.toBoolean()
     }
 
 }

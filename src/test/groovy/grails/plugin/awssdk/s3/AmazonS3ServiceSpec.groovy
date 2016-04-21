@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.amazonaws.services.s3.model.CannedAccessControlList
 import com.amazonaws.services.s3.model.ObjectListing
+import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.S3ObjectSummary
 import grails.test.mixin.TestFor
 import spock.lang.Specification
@@ -16,7 +17,6 @@ class AmazonS3ServiceSpec extends Specification {
 
     static doWithConfig(conf) {
         conf.grails.plugin.awssdk.s3.bucket = BUCKET_NAME
-        conf.grails.plugin.awssdk.s3.cnameEnabled = true
         conf.grails.plugin.awssdk.s3.region = 'eu-west-1'
     }
 
@@ -214,7 +214,8 @@ class AmazonS3ServiceSpec extends Specification {
         String path = "filePrefix.txt"
 
         when:
-        String url = service.storeFile(path, input, CannedAccessControlList.PublicRead, 'txt')
+        ObjectMetadata metadata = service.buildMetadataFromType('file', 'txt')
+        String url = service.storeInputStream(path, input, metadata)
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -224,10 +225,11 @@ class AmazonS3ServiceSpec extends Specification {
     void "Storing pdf input with private ACL"() {
         given:
         InputStream input = mockInputStream()
-        String path = "filePrefix.fileSuffix.csv"
+        String path = "filePrefix.fileSuffix.pdf"
 
         when:
-        String url = service.storeFile(path, input, CannedAccessControlList.PublicRead, 'pdf')
+        ObjectMetadata metadata = service.buildMetadataFromType('pdf', 'pdf')
+        String url = service.storeInputStream(path, input, metadata)
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -240,7 +242,8 @@ class AmazonS3ServiceSpec extends Specification {
         String path = "filePrefix.fileSuffix.jpg"
 
         when:
-        String url = service.storeFile(path, input, CannedAccessControlList.PublicRead, 'jpeg')
+        ObjectMetadata metadata = service.buildMetadataFromType('image', 'jpg')
+        String url = service.storeInputStream(path, input, metadata)
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -253,7 +256,8 @@ class AmazonS3ServiceSpec extends Specification {
         String path = "filePrefix.fileSuffix.swf"
 
         when:
-        String url = service.storeFile(path, input, CannedAccessControlList.PublicRead, 'flash')
+        ObjectMetadata metadata = service.buildMetadataFromType('flash', 'swf')
+        String url = service.storeInputStream(path, input, metadata)
 
         then:
         url == "https://s3-eu-west-1.amazonaws.com/${BUCKET_NAME}/${path}"
@@ -265,7 +269,7 @@ class AmazonS3ServiceSpec extends Specification {
         InputStream input = mockInputStream()
 
         when:
-        String url = service.storeFile('somePath', input)
+        String url = service.storeInputStream('somePath', input, new ObjectMetadata())
 
         then:
         !url
@@ -279,7 +283,7 @@ class AmazonS3ServiceSpec extends Specification {
         InputStream input = mockInputStream()
 
         when:
-        String url = service.storeFile('somePath', input)
+        String url = service.storeInputStream('somePath', input, new ObjectMetadata())
 
         then:
         !url
