@@ -141,26 +141,40 @@ amazonS3Service.deleteBucket(bucketName)
 
 ```groovy 
 // Store a file
+amazonS3Service.storeFile('my-bucket', 'asset/foo/someKey.jpg', new File('/Users/ben/Desktop/photo.jpg'), CannedAccessControlList.PublicRead)
+// Or if you have defined default bucket
+amazonS3Service.storeFile('asset/foo/someKey.jpg', new File('/Users/ben/Desktop/photo.jpg'), CannedAccessControlList.PublicRead)
+    
+// Store an uploaded file
 MultipartFile multipartFile = request.getFile('file')
 if (multipartFile && !multipartFile.empty) {
     amazonS3Service.storeFile('my-bucket', 'asset/foo/' + multipartFile.originalFilename, multipartFile.inputStream, CannedAccessControlList.PublicRead)
-    // Or if you have define default bucket
+    // Or if you have defined default bucket
     amazonS3Service.storeFile('asset/foo/' + multipartFile.originalFilename, multipartFile.inputStream, CannedAccessControlList.PublicRead)
+}
+
+// Store a file asynchronously with transfer manager (https://java.awsblog.com/post/Tx2Q9SGR6OKSVYX/Amazon-S3-TransferManager)
+upload = amazonS3Service.transferFile('my-bucket', 'asset/foo/someKey.jpg', new File('/Users/ben/Desktop/photo.jpg'), CannedAccessControlList.PublicRead)
+// Or if you have defined default bucket
+upload = amazonS3Service.transferFile('asset/foo/someKey.jpg', new File('/Users/ben/Desktop/photo.jpg'), CannedAccessControlList.PublicRead)
+// While the transfer is processing, you can work with the transfer object
+while (!upload.done) {
+    println("${upload.progress.percentTransferred}%")
 }
 
 // Check if an object exists in bucket
 found = amazonS3Service.exists('my-bucket', 'assets/foo/fail-0.gif')
-// Or if you have define default bucket
+// Or if you have defined default bucket
 found = amazonS3Service.exists('assets/foo/fail-0.gif')
 
 // Generate a pre-signed URL valid during 24h
 url = amazonS3Service.generatePresignedUrl('my-bucket', 'assets/foo/fail-0.gif', new Date() + 1)
-// Or if you have define default bucket
+// Or if you have defined default bucket
 url = amazonS3Service.generatePresignedUrl('assets/foo/fail-0.gif', new Date() + 1)
 
 // delete a file
 deleted = amazonS3Service.deleteFile('my-bucket', 'assets/foo/fail-0.gif')
-// Or if you have define default bucket
+// Or if you have defined default bucket
 deleted = amazonS3Service.deleteFile('assets/foo/fail-0.gif') 
 ```
 

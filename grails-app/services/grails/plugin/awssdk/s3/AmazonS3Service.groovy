@@ -6,6 +6,8 @@ import com.amazonaws.regions.Region
 import com.amazonaws.regions.ServiceAbbreviations
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.*
+import com.amazonaws.services.s3.transfer.TransferManager
+import com.amazonaws.services.s3.transfer.Upload
 import grails.core.GrailsApplication
 import grails.plugin.awssdk.AwsClientUtil
 import groovy.util.logging.Log4j
@@ -27,6 +29,7 @@ class AmazonS3Service implements InitializingBean {
 
     GrailsApplication grailsApplication
     AmazonS3Client client
+    TransferManager transferManager
     private String defaultBucketName = ''
 
     void afterPropertiesSet() throws Exception {
@@ -238,25 +241,15 @@ class AmazonS3Service implements InitializingBean {
                      Object input,
                      CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead,
                      String contentType = '') {
-        String fileExtension = path.tokenize('.').last()
-        ObjectMetadata objectMetadata = new ObjectMetadata()
-        Map contentInfo
-        if (HTTP_CONTENTS[contentType]) {
-            contentInfo = HTTP_CONTENTS[contentType] as Map
-        } else if (contentType in ['image', 'photo']) {
-            contentInfo = [contentType: "image/${fileExtension == 'jpg' ? 'jpeg' : fileExtension}"] // Return image/jpeg for images to fix Safari issue (download image instead of inline display)
-        } else if (fileExtension == 'swf') {
-            contentInfo = [contentType: "application/x-shockwave-flash"]
-        } else {
-            contentInfo = [contentType: 'application/octet-stream', contentDisposition: 'attachment']
-        }
-
         try {
             if (input instanceof File) {
-                PutObjectRequest por = new PutObjectRequest(bucketName, path, input)
-                por.setCannedAcl(cannedAcl)
-                client.putObject(por)
+                PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, path, input)
+                        .withCannedAcl(cannedAcl)
+                client.putObject(putObjectRequest)
             } else {
+                String fileExtension = path.tokenize('.').last()
+                Map contentInfo = buildContentInfo(contentType, fileExtension)
+                ObjectMetadata objectMetadata = new ObjectMetadata()
                 if (contentInfo.contentDisposition) {
                     objectMetadata.setContentDisposition(contentInfo.contentDisposition)
                 }
@@ -298,6 +291,42 @@ class AmazonS3Service implements InitializingBean {
         storeFile(defaultBucketName, path, input, cannedAcl, contentType)
     }
 
+    /**
+     *
+     * @param bucketName
+     * @param path
+     * @param file
+     * @param cannedAcl
+     * @param contentType
+     * @return
+     */
+    Upload transferFile(String bucketName,
+                        String path,
+                        File file,
+                        CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead) {
+        if (!transferManager) {
+            // Create transfer manager (only create if required, since it may pool connections and threads)
+            transferManager = new TransferManager(client)
+        }
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, path, file)
+                .withCannedAcl(cannedAcl)
+        transferManager.upload(putObjectRequest)
+    }
+
+    /**
+     *
+     * @param path
+     * @param file
+     * @param cannedAcl
+     * @return
+     */
+    Upload transferFile(String path,
+                        File file,
+                        CannedAccessControlList cannedAcl = CannedAccessControlList.PublicRead) {
+        assertDefaultBucketName()
+        transferFile(defaultBucketName, path, file, cannedAcl)
+    }
+
     // PRIVATE
 
     boolean assertDefaultBucketName() {
@@ -310,6 +339,27 @@ class AmazonS3Service implements InitializingBean {
 
     def getServiceConfig() {
         config[SERVICE_NAME]
+    }
+
+    /**
+     *
+     * @param contentType
+     * @param fileExtension
+     * @return
+     */
+    private static Map buildContentInfo(String contentType,
+                                        String fileExtension) {
+        Map contentInfo
+        if (HTTP_CONTENTS[contentType]) {
+            contentInfo = HTTP_CONTENTS[contentType] as Map
+        } else if (contentType in ['image', 'photo']) {
+            contentInfo = [contentType: "image/${fileExtension == 'jpg' ? 'jpeg' : fileExtension}"] // Return image/jpeg for images to fix Safari issue (download image instead of inline display)
+        } else if (fileExtension == 'swf') {
+            contentInfo = [contentType: "application/x-shockwave-flash"]
+        } else {
+            contentInfo = [contentType: 'application/octet-stream', contentDisposition: 'attachment']
+        }
+        contentInfo
     }
 
     private Boolean getS3CnameEnabled() {
