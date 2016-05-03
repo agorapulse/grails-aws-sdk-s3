@@ -2,6 +2,7 @@ Grails AWS SDK S3 Plugin
 ========================
 
 [![Build Status](https://travis-ci.org/agorapulse/grails-aws-sdk-s3.svg?branch=master)](https://travis-ci.org/agorapulse/grails-aws-sdk-s3)
+[![Download](https://api.bintray.com/packages/agorapulse/plugins/aws-sdk-s3/images/download.svg)](https://bintray.com/agorapulse/plugins/aws-sdk-s3/_latestVersion)
 
 The [AWS SDK Plugins for Grails3](https://medium.com/@benorama/aws-sdk-plugins-for-grails-3-cc7f910fdc0d#.5gdwdxei3) are a suite of plugins that adds support for the [Amazon Web Services](http://aws.amazon.com/) infrastructure services.
 
@@ -34,7 +35,7 @@ repositories {
 
 dependencies {
   ...
-  compile 'org.grails.plugins:aws-sdk-s3:2.0.0-beta4'
+  compile 'org.grails.plugins:aws-sdk-s3:2.0.0-beta5'
   ...
 ```
 
