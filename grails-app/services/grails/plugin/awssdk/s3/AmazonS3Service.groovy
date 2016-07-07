@@ -3,7 +3,6 @@ package grails.plugin.awssdk.s3
 import com.amazonaws.AmazonClientException
 import com.amazonaws.ClientConfiguration
 import com.amazonaws.regions.Region
-import com.amazonaws.regions.ServiceAbbreviations
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.Headers
 import com.amazonaws.services.s3.model.*
@@ -19,7 +18,8 @@ import org.springframework.web.multipart.MultipartFile
 @Log4j
 class AmazonS3Service implements InitializingBean {
 
-    static SERVICE_NAME = ServiceAbbreviations.S3
+    static SERVICE_NAME = AmazonS3Client.S3_SERVICE_NAME
+
     static final Map HTTP_CONTENTS = [
             audio: [contentType: 'audio/mpeg'],
             csv:   [contentType: 'text/csv', contentDisposition: 'attachment'],
