@@ -19,8 +19,19 @@ class UploadService {
 
         try {
             URL url = new URL(urlString)
-            String fileName = url.file.tokenize('/')[-1]
+            String fileName = urlString.replaceAll('https://', '').replaceAll('http://', '').replaceAll('/', '-')
             BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream("$uploadPath/$fileName"))
+
+            // Detect potential redirects (Code 3xx)
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection()
+            int status = connection.getResponseCode();
+            if (status == HttpURLConnection.HTTP_MOVED_TEMP
+                    || status == HttpURLConnection.HTTP_MOVED_PERM
+                    || status == HttpURLConnection.HTTP_SEE_OTHER) {
+                url = new URL(connection.getHeaderField('Location'))
+            }
+            connection.disconnect()
+
             out << url.openStream()
             out.close()
             File file = new File("$uploadPath/$fileName")
