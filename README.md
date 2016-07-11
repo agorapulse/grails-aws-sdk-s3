@@ -15,6 +15,7 @@ The following services are currently supported:
 * [AWS SDK Kinesis Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-kinesis)
 * [AWS SDK S3 Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-s3)
 * [AWS SDK SES Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-ses)
+* [AWS SDK SNS Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-sns)
 * [AWS SDK SQS Grails Plugin](http://github.com/agorapulse/grails-aws-sdk-sqs)
 
 # Introduction
