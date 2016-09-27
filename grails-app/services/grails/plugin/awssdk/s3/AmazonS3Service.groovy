@@ -10,12 +10,10 @@ import com.amazonaws.services.s3.transfer.TransferManager
 import com.amazonaws.services.s3.transfer.Upload
 import grails.core.GrailsApplication
 import grails.plugin.awssdk.AwsClientUtil
-import groovy.util.logging.Log4j
 import org.apache.commons.codec.digest.DigestUtils
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.web.multipart.MultipartFile
 
-@Log4j
 class AmazonS3Service implements InitializingBean {
 
     static SERVICE_NAME = AmazonS3Client.S3_SERVICE_NAME
