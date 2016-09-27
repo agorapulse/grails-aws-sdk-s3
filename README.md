@@ -28,15 +28,9 @@ S3 is easy to use object storage, with a simple web service interface to store a
 Add plugin dependency to your `build.gradle`:
 
 ```groovy
-repositories {
-    ...
-    maven { url "http://dl.bintray.com/agorapulse/plugins" } // TEMP, to remove once the plugin is officially released
-    ...
-}
-
 dependencies {
   ...
-  compile 'org.grails.plugins:aws-sdk-s3:2.0.0-beta6'
+  compile 'org.grails.plugins:aws-sdk-s3:2.0.0'
   ...
 ```
 
