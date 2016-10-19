@@ -55,6 +55,8 @@ task wrapper(type: Wrapper) {
 }
 
 grailsPublish {
+    user = System.getenv("BINTRAY_USER") ?: ''
+    key = System.getenv("BINTRAY_KEY") ?: ''
     userOrg = 'agorapulse'
     githubSlug = "agorapulse/grails-$project.name"
     license {
@@ -63,6 +65,6 @@ grailsPublish {
     title = "AWS SDK S3"
     desc = "Grails AWS SDK S3 plugin"
     developers = [benorama:"Benoit Hediard"]
-    portalUser = ""
-    portalPassword = ""
+    portalUser = System.getenv("GRAILS_PORTAL_USER") ?: ''
+    portalPassword = System.getenv("GRAILS_PORTAL_PASSWORD") ?: ''
 }
