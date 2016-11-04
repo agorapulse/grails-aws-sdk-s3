@@ -64,12 +64,19 @@ class UploadService {
         }
     }
 
-    String getUploadPath() {
-        grailsApplication.config.agorapulse?.uploadPath ?: '/var/tmp'
-    }
-
 	void uploadFile(MultipartFile multipartFile, fileName) {
 		multipartFile.transferTo(new File("${uploadPath}/${fileName}"))
 	}
+
+    // PRIVATE
+
+    def getConfig() {
+        grailsApplication.config.grails?.plugins?.awssdk ?: grailsApplication.config.grails?.plugin?.awssdk
+    }
+
+    private String getUploadPath() {
+        config['s3'] ? config['s3'].uploadPath ?: '/var/tmp' : '/var/tmp'
+    }
+
 
 }
