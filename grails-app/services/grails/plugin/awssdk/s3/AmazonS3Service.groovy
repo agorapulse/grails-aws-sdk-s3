@@ -115,9 +115,9 @@ class AmazonS3Service implements InitializingBean {
             client.deleteObject(bucketName, key)
             deleted = true
         } catch (AmazonS3Exception exception) {
-            log.warn(exception)
+            log.warn 'An amazon S3 exception was catched while deleting a file', exception
         } catch (AmazonClientException exception) {
-            log.warn(exception)
+            log.warn 'An amazon client exception was catched while deleting a file', exception
         }
         deleted
     }
@@ -150,9 +150,9 @@ class AmazonS3Service implements InitializingBean {
             }
             deleted = true
         } catch (AmazonS3Exception exception) {
-            log.warn(exception)
+            log.warn 'An amazon S3 exception was catched while deleting files', exception
         } catch (AmazonClientException exception) {
-            log.warn(exception)
+            log.warn 'An amazon client exception was catched while deleting files', exception
         }
         deleted
     }
@@ -186,9 +186,9 @@ class AmazonS3Service implements InitializingBean {
                 exists = true
             }
         } catch (AmazonS3Exception exception) {
-            log.warn(exception)
+            log.warn 'An amazon S3 exception was catched while checking if file exists', exception
         } catch (AmazonClientException exception) {
-            log.warn(exception)
+            log.warn 'An amazon client exception was catched while checking if file exists', exception
         }
         exists
     }
@@ -273,10 +273,10 @@ class AmazonS3Service implements InitializingBean {
         try {
             client.putObject(bucketName, path, input, metadata)
         } catch (AmazonS3Exception exception) {
-            log.error(exception)
+            log.warn 'An amazon S3 exception was catched while storing input stream', exception
             return ''
         } catch (AmazonClientException exception) {
-            log.error(exception)
+            log.warn 'An amazon client exception was catched while storing input stream', exception
             return ''
         }
 
@@ -314,10 +314,10 @@ class AmazonS3Service implements InitializingBean {
                     .withCannedAcl(cannedAcl)
             client.putObject(putObjectRequest)
         } catch (AmazonS3Exception exception) {
-            log.error(exception)
+            log.warn 'An amazon S3 exception was catched while storing file', exception
             return ''
         } catch (AmazonClientException exception) {
-            log.error(exception)
+            log.warn 'An amazon client exception was catched while storing file', exception
             return ''
         }
 

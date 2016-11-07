@@ -53,13 +53,13 @@ class UploadService {
             File file = new File("$uploadPath/$fileName")
             return file
         } catch (SocketTimeoutException exception) {
-            log.warn exception
+            log.warn 'A socket timeout exception was catched while downloading file', exception
             return null
         } catch (FileNotFoundException exception) {
-            log.warn(exception)
+            log.warn 'A file not found exception was catched while downloading file', exception
             return null
         } catch (IOException exception) {
-            log.warn(exception)
+            log.warn 'An IO exception was catched while downloading file', exception
             return null
         }
     }
