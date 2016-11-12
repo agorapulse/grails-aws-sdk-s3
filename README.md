@@ -30,7 +30,7 @@ Add plugin dependency to your `build.gradle`:
 ```groovy
 dependencies {
   ...
-  compile 'org.grails.plugins:aws-sdk-s3:2.0.5'
+  compile 'org.grails.plugins:aws-sdk-s3:2.0.6'
   ...
 ```
 
