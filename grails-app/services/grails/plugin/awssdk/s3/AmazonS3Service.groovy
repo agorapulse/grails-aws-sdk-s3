@@ -205,6 +205,33 @@ class AmazonS3Service implements InitializingBean {
 
     /**
      *
+     * @param bucketName
+     * @param key
+     * @param pathName
+     * @return
+     */
+    File getFile(String bucketName,
+                 String key,
+                 String pathName) {
+        File localFile = new File(pathName)
+        client.getObject(new GetObjectRequest(bucketName, key), localFile)
+        localFile
+    }
+
+    /**
+     *
+     * @param key
+     * @param pathName
+     * @return
+     */
+    File getFile(String key,
+                 String pathName) {
+        assertDefaultBucketName()
+        getFile(defaultBucketName, key, pathName)
+    }
+
+    /**
+     *
      * @return
      */
     List listBucketNames() {

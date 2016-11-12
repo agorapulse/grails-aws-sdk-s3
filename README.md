@@ -159,19 +159,22 @@ while (!upload.done) {
 }
 
 // Check if an object exists in bucket
-found = amazonS3Service.exists('my-bucket', 'assets/foo/fail-0.gif')
+found = amazonS3Service.exists('my-bucket', 'asset/foo/someKey.jpg')
 // Or if you have defined default bucket
-found = amazonS3Service.exists('assets/foo/fail-0.gif')
+found = amazonS3Service.exists('asset/foo/someKey.jpg')
 
 // Generate a pre-signed URL valid during 24h
-url = amazonS3Service.generatePresignedUrl('my-bucket', 'assets/foo/fail-0.gif', new Date() + 1)
+url = amazonS3Service.generatePresignedUrl('my-bucket', 'asset/foo/someKey.jpg', new Date() + 1)
 // Or if you have defined default bucket
-url = amazonS3Service.generatePresignedUrl('assets/foo/fail-0.gif', new Date() + 1)
+url = amazonS3Service.generatePresignedUrl('asset/foo/someKey.jpg', new Date() + 1)
 
-// delete a file
-deleted = amazonS3Service.deleteFile('my-bucket', 'assets/foo/fail-0.gif')
+// Get a file
+file = amazonS3Servuce.getFile('asset/foo/someKey.jpg', '/Users/ben/Desktop/photo.jpg')
+
+// Delete a file
+deleted = amazonS3Service.deleteFile('my-bucket', 'asset/foo/someKey.jpg')
 // Or if you have defined default bucket
-deleted = amazonS3Service.deleteFile('assets/foo/fail-0.gif') 
+deleted = amazonS3Service.deleteFile('asset/foo/someKey.jpg') 
 ```
 
 Supported content types when storing a file:
